@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+class ViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
 
     var data:[[Double]]=[[]]
     var imagePicker: UIImagePickerController!
@@ -27,7 +27,7 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
         self.title = "Kohonen"
         mapCollectionView.delegate = self
         mapCollectionView.dataSource = self
-        mapCollectionView.layer.borderColor=UIColor.blackColor().CGColor
+        mapCollectionView.layer.borderColor=UIColor.black.cgColor
         mapCollectionView.layer.borderWidth = 1
         
         som = Kohonen(xClient: Constants.windowWidth, yClient: Constants.windowHeight, cellsUp: Constants.cellsDown, cellsAcross: Constants.cellsAcross, iterations: Constants.iterations)
@@ -37,22 +37,25 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
     
     @IBAction func epoch(sender: AnyObject) {
         //print(data)
-        som.epoch(data)
-        epochLabel.text="Epoch: \(som.iterationCount - 1)"
-        let nodeY=som.winningNodePos%Constants.cellsAcross
-        let nodeX=som.winningNodePos/Constants.cellsAcross
-        winningNodeLabel.text="Winning node: [\(nodeX),\(nodeY)] (\(som.winningNodePos))"
-        neighborhoodRadiusLabel.text = "Neighborhood radius: \(som.neighbourhoodRadius)"
-        let red = CGFloat(data[som.randomData][0])
-        let green = CGFloat(data[som.randomData][1])
-        let blue = CGFloat(data[som.randomData][2])
-        colorImage.backgroundColor=UIColor(red: red, green: green, blue: blue, alpha: 1)
-        mapCollectionView.reloadData()
+        if (som.epoch(data: data)) {
+            
+            epochLabel.text = "Epoch: \(som.iterationCount - 1)"
+            let nodeY = som.winningNodePos % Constants.cellsAcross
+            let nodeX = som.winningNodePos / Constants.cellsAcross
+            winningNodeLabel.text="Winning node: [\(nodeX),\(nodeY)] (\(som.winningNodePos))"
+            neighborhoodRadiusLabel.text = "Neighborhood radius: \(som.neighbourhoodRadius)"
+            let red = CGFloat(data[som.randomData][0])
+            let green = CGFloat(data[som.randomData][1])
+            let blue = CGFloat(data[som.randomData][2])
+            colorImage.backgroundColor = UIColor(red: red, green: green, blue: blue, alpha: 1)
+            mapCollectionView.reloadData()
+            
+        }
     }
     
     func train()->Bool{
         if !som.done {
-            if !som.epoch(data){
+            if !som.epoch(data: data){
                 return false
             }
         }
@@ -67,15 +70,15 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
     @IBAction func takePic(sender: AnyObject) {
         imagePicker =  UIImagePickerController()
         imagePicker.delegate = self
-        imagePicker.sourceType = .Camera
+        imagePicker.sourceType = .camera
         
-        presentViewController(imagePicker, animated: true, completion: nil)
+        present(imagePicker, animated: true, completion: nil)
     }
     
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
-        imagePicker.dismissViewControllerAnimated(true, completion: nil)
+    private func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
+        imagePicker.dismiss(animated: true, completion: nil)
         let image = info[UIImagePickerControllerOriginalImage] as? UIImage
-        let resizedImage = image?.resize(40)
+        let resizedImage = image?.resize(dimension: 40)
         let imageRGB=resizedImage?.rgbData()
         data = imageRGB!
         som = Kohonen(xClient: Constants.windowWidth, yClient: Constants.windowHeight, cellsUp: Constants.cellsDown, cellsAcross: Constants.cellsAcross, iterations: Constants.iterations)
@@ -110,18 +113,18 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
         // Dispose of any resources that can be recreated.
     }
     
-    func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return Constants.cellsAcross
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return Constants.cellsAcross * Constants.cellsDown
     }
     
     func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
         return Constants.cellsDown
     }
     
-    func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
-        let cell = mapCollectionView.dequeueReusableCellWithReuseIdentifier("pixel", forIndexPath: indexPath)
-        cell.layer.borderColor=UIColor.blackColor().CGColor
+        let cell = mapCollectionView.dequeueReusableCell(withReuseIdentifier: "pixel", for: indexPath as IndexPath)
+        cell.layer.borderColor=UIColor.black.cgColor
         cell.layer.borderWidth = 0.5
         if som != nil{
             let location = indexPath.section * Constants.cellsAcross + indexPath.row
@@ -130,20 +133,20 @@ class ViewController: UIViewController, UICollectionViewDelegate, UICollectionVi
             let blue = CGFloat(som.som[location].weight[2])
             cell.backgroundColor=UIColor(red: red, green: green, blue: blue, alpha: 1)
         }else{
-            cell.backgroundColor=UIColor.whiteColor()
+            cell.backgroundColor=UIColor.white
         }
         return cell
     }
     
     
-    func collectionView(collectionView : UICollectionView,layout collectionViewLayout:UICollectionViewLayout,sizeForItemAtIndexPath indexPath:NSIndexPath) -> CGSize
+    func collectionView(_ collectionView : UICollectionView,layout collectionViewLayout:UICollectionViewLayout,sizeForItemAt indexPath:IndexPath) -> CGSize
     {
         var cellWidth:CGFloat!
         var cellHeight:CGFloat!
         
-        cellWidth=mapCollectionView.frame.width/CGFloat(Constants.cellsAcross)
-        cellHeight=mapCollectionView.frame.width/CGFloat(Constants.cellsDown)
-        let cellSize:CGSize = CGSizeMake(cellWidth, cellHeight)
+        cellWidth = self.mapCollectionView.frame.width / CGFloat(Constants.cellsAcross)
+        cellHeight = self.mapCollectionView.frame.width / CGFloat(Constants.cellsDown)
+        let cellSize:  CGSize = CGSize(width: cellWidth, height: cellHeight)
         return cellSize
     }
 

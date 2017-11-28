@@ -49,13 +49,13 @@ class Kohonen{
         timeConstant = Double(self.iterations)/log(mapRadius)
     }
     
-    func epoch(data:[[Double]]) -> Bool{
+    func epoch(data:[[Double]]) -> Bool {
         
         if data[0].count != Constants.sizeOfInputVector {
             return false
         }
         
-        if done == true{
+        if done == true {
             print("Training is complete")
             return true
         }
@@ -64,7 +64,7 @@ class Kohonen{
         if iterations > 0{
             let thisVector = Int(arc4random_uniform(UInt32(data.count)))
             randomData=thisVector
-            winningNode = findBestMatchingNode(data[thisVector])
+            winningNode = findBestMatchingNode(vec: data[thisVector])
             neighbourhoodRadius = mapRadius * exp(-(Double(iterationCount)/timeConstant))
             
             for i in 0...som.count-1{
@@ -74,7 +74,7 @@ class Kohonen{
                 
                 if distToNode < widthSq{
                     influence = exp(-(distToNode/(2*widthSq)))
-                    som[i].adjustWeights(data[thisVector], learningRate: learningRate, influence: influence)
+                    som[i].adjustWeights(target: data[thisVector], learningRate: learningRate, influence: influence)
                 }
             }
             
@@ -82,7 +82,7 @@ class Kohonen{
             iterationCount += 1
         }
             
-        else{
+        else {
             done = true
         }
         
@@ -93,7 +93,7 @@ class Kohonen{
         var winner:Node?
         var lowestDistance = 999999.0
         for i in 0...som.count - 1{
-            let dist=som[i].calculateDistance(vec)
+            let dist=som[i].calculateDistance(input: vec)
             if dist < lowestDistance{
                 lowestDistance = dist
                 winner = som[i]
