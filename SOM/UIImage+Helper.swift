@@ -12,18 +12,19 @@ import UIKit
 extension UIImage{
     func resize(dimension:Int) -> UIImage{
         
-        UIGraphicsBeginImageContext(CGSizeMake(CGFloat(dimension), CGFloat(dimension)))
-        self.drawInRect(CGRectMake(0, 0, CGFloat(dimension), CGFloat(dimension)))
+        UIGraphicsBeginImageContext(CGSize(width: CGFloat(dimension), height: CGFloat(dimension)))
+        self.draw(in: CGRect(x: 0.0, y: 0.0, width: CGFloat(dimension), height: CGFloat(dimension)))
         let newImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         
-        return newImage
+        return newImage!
     }
     
     func rgbData() -> [[Double]]{
         
-        let pixelData = CGDataProviderCopyData(CGImageGetDataProvider(self.CGImage))
-        let data: UnsafePointer<UInt8> = CFDataGetBytePtr(pixelData)
+        let pixelData = CGDataProvider.init(data: self.cgImage!.dataProvider as! CFData)
+        //        let pixelData = CGDataProviderCopyData(CGImageGetDataProvider(self.cgImage!)!)
+        let data: UnsafePointer<UInt8> = CFDataGetBytePtr(pixelData as! CFData)
         var imageRGB:[[Double]] = [[]]
         imageRGB.removeFirst()
         for i in 0...Int(self.size.height)-1{
